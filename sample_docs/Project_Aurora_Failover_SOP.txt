@@ -1,0 +1,64 @@
+STANDARD OPERATING PROCEDURE (SOP) - PROJECT AURORA DISASTER RECOVERY & REGIONAL FAILOVER
+Document Code: SOP-OPS-AUR-009
+Effective Date: July 31, 2026
+Department: Cloud Infrastructure Engineering / Site Reliability Operations
+Author: Dr. Evelyn Pierce (Lead Cloud Architect)
+
+================================================================================
+1. OBJECTIVE & CRITERIA FOR FAILOVER TRIGGER
+================================================================================
+This standard operating procedure defines the manual and automated steps required to failover Project Aurora's inventory services from the Primary region (us-east-1, N. Virginia) to the Standby region (us-west-2, Oregon) in the event of an AWS availability zone black-out or critical network link disruption.
+
+Triggering Conditions:
+- API health check endpoints return >15% error rates (HTTP 5xx) for 3 consecutive minutes.
+- AWS regional status dashboard flags multi-AZ degradation in N. Virginia.
+- Primary database replication lag to us-west-2 replica exceeds 60 seconds.
+
+================================================================================
+2. COMPREHENSIVE STEP-BY-STEP INSTRUCTIONS
+================================================================================
+Follow the exact order of steps. Skipping database steps can result in data corruption.
+
+Step 1: Terminate Ingress Traffic to us-east-1
+- Access Route 53 DNS Console on the AWS management dashboard.
+- Locate the DNS hosted zone for `inventory.enterprise.com`.
+- Modify the failover routing policy parameters:
+  - Set routing policy endpoint from us-east-1 (Primary) to us-west-2 (Standby).
+  - Reduce TTL to 10 seconds to propagate endpoint addresses across consumer networks.
+
+Step 2: Database Role Promotion
+- Open RDS console page. Select the Aurora Postgres global database instance labeled `aurora-global-inventory-db`.
+- Select the replica node group in `us-west-2` (Oregon region).
+- Click "Actions" -> "Remove from Global Database" or "Promote Cluster". This stops physical database synchronization replication and changes the us-west-2 cluster into a read-write standalone database repository.
+- Verify node status changes to "Available" (Expected completion window: 90 seconds).
+
+Step 3: Auto-Scaling Compute & EKS Deployments
+- Connect to Standby EKS admin console via command terminal.
+- Scale deployment replica counts for microservices:
+  `kubectl scale deployment aurora-inventory-service --replicas=12 -n production`
+  `kubectl scale deployment aurora-sync-worker --replicas=4 -n production`
+- Run health checks:
+  `kubectl get pods -n production -w`
+- Confirm all pods transition to RUNNING.
+
+Step 4: DNS Health Check Validation
+- Initiate external ping validations:
+  `curl -i https://inventory.enterprise.com/api/v1/health`
+- Verify that response headers identify the processing region as `us-west-2`.
+- Verify database read/write permissions by creating a mock transaction log record.
+
+================================================================================
+3. POST-MORTEM & ROLE BACK PROCEDURES
+================================================================================
+Once AWS us-east-1 returns to stable operations:
+- Do not immediately change DNS endpoints back. Run us-west-2 as primary for at least 24 hours.
+- Perform audit trail reconciliation. Use `database.py` audit table tracking tools to compare offline/failover database record count differences.
+- Configure physical synchronization logs backwards (from us-west-2 as source to us-east-1 as destination) before returning to active-passive.
+
+================================================================================
+4. EMERGENCY CONTACTS DIRECTORY
+================================================================================
+- Site Reliability Escalation Group: `sre-oncall@enterprise.com`
+- Database Ops Lead: Marcus Brody (`m.brody@enterprise.com` | Ext. 9912)
+- Security Officer: Neil Armstrong (`n.armstrong@enterprise.com` | Ext. 9904)
+================================================================================

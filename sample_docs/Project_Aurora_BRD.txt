@@ -1,0 +1,20 @@
+# BUSINESS REQUIREMENTS DOCUMENT (BRD) - PROJECT AURORA
+
+## 1. Project Overview
+Project Aurora is the corporate initiative to migrate legacy on-premise inventory management systems to a highly available, multi-region AWS cloud infrastructure. The main objective is to reduce operational overhead by 25% and achieve a service level agreement (SLA) uptime of 99.99%.
+
+## 2. Stakeholders
+* **Sponsor**: Elizabeth Vance, VP of Infrastructure Engineering
+* **Product Manager**: Marcus Brody
+* **Lead Architect**: Dr. Evelyn Pierce
+* **Lead QA**: Neil Armstrong
+
+## 3. Scope & Timelines
+* **Phase 1: Discovery & Assessment** - Completed Q1 2026
+* **Phase 2: Database Schema & Migration Strategy** - Target Completion: October 15, 2026
+* **Phase 3: Service Deployment & DNS Cutover** - Target Completion: December 1, 2026
+
+## 4. Key Performance Indicators (KPIs)
+* Inventory synchronization delay must remain under 500ms between US-East and US-West regions.
+* Auto-scaling triggers must scale up the cluster size within 90 seconds of CPU usage exceeding 75%.
+* Ingestion processing rate of inventory SKU data must support 5,000 requests per second.

@@ -1,0 +1,16 @@
+# MEETING MINUTES (MOM) - PROJECT HELIOS KICKOFF
+
+**Date**: July 28, 2026
+**Topic**: Project Helios (Customer Loyalty Rewards Platform Upgrade)
+**Attendees**: Marcus Brody (Product Manager), Evelyn Pierce (Architect), Sarah Jenkins (Lead BA), Jessica Taylor (QA)
+
+## Discussion Points:
+1. **Legacy Retirement**: The legacy loyalty points calculation engine will be decommissioned by November 2026.
+2. **Real-time Processing**: Sarah emphasized that point accrual calculations must occur immediately upon credit card swipe events. Batch processing is no longer acceptable.
+3. **Database Selection**: Dr. Pierce recommended using DynamoDB due to high-throughput transactional requirements.
+4. **Third-party Integration**: The platform will connect to Salesforce Marketing Cloud via Webhooks to push customer tiers immediately after upgrades.
+
+## Action Items:
+* **Sarah Jenkins**: Finalize functional requirements for the rewards tier criteria document. (Due: August 10, 2026)
+* **Evelyn Pierce**: Provision sandbox DynamoDB database cluster. (Due: August 15, 2026)
+* **Jessica Taylor**: Construct initial integration test suites for points transactions endpoint. (Due: September 1, 2026)

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectLens AI - Enterprise Knowledge Assistant</title>
+    <!-- Modern web font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- SECURE LOGIN CONTAINER -->
+    <div id="login-container" class="login-overlay">
+        <div class="login-card glass">
+            <div class="login-header">
+                <div class="logo-icon">🕵️‍♂️</div>
+                <h2>ProjectLens AI</h2>
+                <p>Enterprise Knowledge Discovery Platform</p>
+            </div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Enterprise ID</label>
+                    <input type="text" id="username" placeholder="e.g., employee or admin" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Security Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                
+                <div id="login-error" class="error-msg hide">Invalid credentials. Please try again.</div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    Authenticate Session
+                </button>
+            </form>
+            <div class="login-footer">
+                <small>🔒 Local intranet only. Inputs are isolated from model training.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP DASHBOARD (HIDDEN ON START) -->
+    <div id="app-container" class="dashboard-layout hide">
+        
+        <!-- SIDE NAVIGATION -->
+        <aside class="sidebar glass">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-emoji">🔎</span>
+                    <span class="logo-text">ProjectLens AI</span>
+                </div>
+                <div class="badge">MVP v1.0</div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="chat-tab">
+                    <span class="nav-icon">💬</span> Chat Assistant
+                </button>
+                <button class="nav-item admin-only" data-tab="docs-tab">
+                    <span class="nav-icon">📁</span> Document Workspace
+                </button>
+                <button class="nav-item admin-only" data-tab="audits-tab">
+                    <span class="nav-icon">🛡️</span> Security Audits
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="avatar-icon">👤</div>
+                    <div class="user-info">
+                        <span class="user-name" id="user-display">Loading...</span>
+                        <span class="user-role" id="role-display">Role</span>
+                    </div>
+                </div>
+                <button id="logout-btn" class="btn btn-secondary btn-block">
+                    Terminate Session
+                </button>
+            </div>
+        </aside>
+        
+        <!-- MAIN DASHBOARD CONTENT WINDOW -->
+        <main class="main-content">
+            
+            <!-- CHAT ASSISTANT TAB -->
+            <section id="chat-tab" class="tab-content active">
+                <div class="chat-wrapper">
+                    <!-- Chat Body grid -->
+                    <div class="chat-grid">
+                        
+                        <!-- CHAT DIALOG STREAM -->
+                        <div class="chat-dialog glass">
+                            <div class="tab-header">
+                                <h3>Conversational Knowledge Assistant</h3>
+                                <p class="tab-subtitle">Ask semantic questions about BRDs, architecture files, or team directories.</p>
+                            </div>
+                            
+                            <div class="message-stream" id="chat-messages">
+                                <!-- Dynamic message blocks inserted here -->
+                                <div class="message system-msg">
+                                    <div class="msg-avatar">🤖</div>
+                                    <div class="msg-content">
+                                        <p>Welcome to <strong>ProjectLens AI</strong>. I can query requirement documents, meeting notes, or organization records.</p>
+                                        <p class="sample-title">Try asking these sample questions:</p>
+                                        <ul class="sample-queries">
+                                            <li>"Explain Project Atlas."</li>
+                                            <li>"Who is the Business Analyst for Project Atlas?"</li>
+                                            <li>"What APIs are implemented?"</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Dynamic Suggested Follow-ups Panel -->
+                            <div id="follow-up-container" class="follow-ups-bar hide">
+                                <span class="follow-up-label">Suggested follow-ups:</span>
+                                <div class="follow-up-list" id="follow-up-list">
+                                    <!-- Dynamic buttons inserted here -->
+                                </div>
+                            </div>
+
+                            <div class="chat-input-area">
+                                <form id="chat-form">
+                                    <input type="text" id="chat-input" placeholder="Type your project query..." required autocomplete="off">
+                                    <button type="submit" class="btn btn-primary" id="send-btn">Ask Agent</button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- AGENT TELEMETRY LOG PANEL -->
+                        <div class="agent-telemetry glass">
+                            <div class="telemetry-header">
+                                <h4>⚙️ Agentic Reasoning Trace</h4>
+                                <span class="status-indicator online">active</span>
+                            </div>
+                            <div class="telemetry-body" id="telemetry-logs">
+                                <div class="empty-telemetry">
+                                    <p>Submit a query to inspect the Agent's reasoning, vector score math, and dynamic source routing steps.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </section>
+            
+            <!-- DOCUMENT WORKSPACE TAB (ADMIN ONLY) -->
+            <section id="docs-tab" class="tab-content admin-only">
+                <div class="tab-header">
+                    <h3>Document Management Workspace</h3>
+                    <p class="tab-subtitle">Upload requirement files, meeting summaries, and directories to enrich the Vector DB knowledge index.</p>
+                </div>
+                
+                <div class="docs-grid">
+                    <!-- Left: Upload Form -->
+                    <div class="upload-panel glass">
+                        <h4>Register New Document</h4>
+                        <form id="upload-form">
+                            <div class="form-group">
+                                <label for="upload-file">Select Local File (.txt, .md, .json)</label>
+                                <input type="file" id="upload-file" accept=".txt,.md,.json" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="project-name">Project Association</label>
+                                <input type="text" id="project-name" placeholder="e.g., Project Atlas or General Process" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="doc-type">Document Type Category</label>
+                                <select id="doc-type" required>
+                                    <option value="BRD">Business Requirements Document (BRD)</option>
+                                    <option value="FRD">Functional Requirements Document (FRD)</option>
+                                    <option value="Meeting Notes">Meeting Minutes (MOM)</option>
+                                    <option value="Org Chart">Team Directory / Org Chart</option>
+                                    <option value="Architecture">Technical Specifications</option>
+                                    <option value="SOP">Process / Standard Operating Procedure</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-block" id="upload-submit-btn">
+                                Save Document Content
+                            </button>
+                        </form>
+                        
+                        <div class="reindex-box">
+                            <h5>Refresh RAG Indices</h5>
+                            <p>Re-build vocabulary vector spaces after document modifications or new additions.</p>
+                            <button id="reindex-btn" class="btn btn-warning btn-block">
+                                Re-index Knowledge Base
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Registered Files Table -->
+                    <div class="files-list-panel glass">
+                        <h4>Knowledge Repository Files</h4>
+                        <div class="table-scroll">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Project</th>
+                                        <th>Type</th>
+                                        <th>Uploaded By</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="documents-table-body">
+                                    <!-- Dynamic rows -->
+                                    <tr>
+                                        <td colspan="5" class="text-center">No documents uploaded.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- SECURITY AUDITS TAB (ADMIN ONLY) -->
+            <section id="audits-tab" class="tab-content admin-only">
+                <div class="tab-header">
+                    <h3>Enterprise Security Audit Logs</h3>
+                    <p class="tab-subtitle">Immutable chronological ledger monitoring RBAC approvals, data queries, and ingestion sequences.</p>
+                </div>
+                
+                <div class="audits-container glass">
+                    <div class="audit-actions-bar">
+                        <h4>Security Audit Trails</h4>
+                        <button id="refresh-audits-btn" class="btn btn-secondary">Refresh Logs</button>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Operator</th>
+                                    <th>Role</th>
+                                    <th>Action Type</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audits-table-body">
+                                <!-- Dynamic rows -->
+                                <tr>
+                                    <td colspan="5" class="text-center">No logs logged.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+        </main>
+    </div>
+
+    <!-- Core App Controller Script -->
+    <script src="app.js"></script>
+</body>
+</html>
