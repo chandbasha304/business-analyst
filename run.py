@@ -56,7 +56,9 @@ def main():
     print("==================================================================\n")
     
     try:
-        uvicorn.run("backend.main:app", host=host, port=port, reload=True)
+        uvicorn.run("backend.main:app", host="127.0.0.1", port=8085, reload=False)
+
+        #uvicorn.run("backend.main:app", host=host, port=port, reload=True)
     except KeyboardInterrupt:
         print("\n[System] Server terminated by user request. Exiting.")
     except Exception as e:

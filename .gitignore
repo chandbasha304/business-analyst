@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+ENV/
+env/
+
+# Environments & Keys
+.env
+
+# Database & Vector Index
+*.db
+projectlens.db
+chroma_db/
+
+# IDE & Editor
+.idea/
+.vscode/
+
+# Scratch & Logs
+scratch/
+*.log

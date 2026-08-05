@@ -1,8 +1,16 @@
 import re
 import math
 import os
-import chromadb
 from typing import List, Dict, Any, Optional, Tuple
+
+try:
+    import chromadb
+    CHROMA_AVAILABLE = True
+    EmbeddingBase = chromadb.EmbeddingFunction
+except ImportError:
+    CHROMA_AVAILABLE = False
+    EmbeddingBase = object
+
 
 
 class Document:
@@ -16,7 +24,7 @@ class Document:
 
 class RecursiveCharacterTextSplitter:
     """Recursively splits text into character chunks with overlaps, keeping word boundaries if possible."""
-    def __init__(self, chunk_size: int = 500, chunk_overlap: int = 100):
+    def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
 
@@ -224,47 +232,41 @@ class TFIDFVectorStore:
         return scores[:k]
 
 
-class ProjectLensEmbeddingFunction(chromadb.EmbeddingFunction):
+class ProjectLensEmbeddingFunction(EmbeddingBase):
     def __init__(self, api_key: str = ""):
         self.api_key = api_key
 
-    def __call__(self, input: chromadb.Documents) -> chromadb.Embeddings:
+    def __call__(self, input: List[str]) -> List[List[float]]:
         if self.api_key:
+            import httpx
+            headers = {"Content-Type": "application/json"}
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={self.api_key}"
+            
+            embeddings = []
             try:
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key={self.api_key}"
-                headers = {"Content-Type": "application/json"}
-                
-                requests = []
                 for text in input:
-                    requests.append({
-                        "model": "models/text-embedding-004",
+                    payload = {
                         "content": {
-                            "parts": [{"text": text}]
+                            "parts": [{"text": text[:2048]}]
                         }
-                    })
-                
-                payload = {"requests": requests}
-                
-                import httpx
-                response = httpx.post(url, headers=headers, json=payload, timeout=30.0)
-                response.raise_for_status()
-                data = response.json()
-                
-                embeddings = []
-                for emb in data.get("embeddings", []):
-                    embeddings.append(emb["values"])
+                    }
+                    res = httpx.post(url, headers=headers, json=payload, timeout=10.0)
+                    if res.status_code == 200:
+                        val = res.json().get("embedding", {}).get("values", [])
+                        if val:
+                            embeddings.append(val)
+                    else:
+                        break
                 
                 if len(embeddings) == len(input):
                     return embeddings
-                
-                print(f"[Warning] Batch embedding count mismatch: got {len(embeddings)}, expected {len(input)}. Falling back to local hash vectorizer.")
             except Exception as e:
-                print(f"[Warning] Live Gemini embedding failed: {e}. Falling back to local hash vectorizer.")
+                pass
         
         # Local fallback: deterministic vectorizer
         return [self._local_vectorize(text) for text in input]
 
-    def _local_vectorize(self, text: str, dimensions: int = 384) -> List[float]:
+    def _local_vectorize(self, text: str, dimensions: int = 3072) -> List[float]:
         import hashlib
         import math
         vec = [0.0] * dimensions
@@ -285,7 +287,10 @@ class ProjectLensEmbeddingFunction(chromadb.EmbeddingFunction):
 
 
 class ChromaVectorStore:
-    def __init__(self, persist_directory: str = "chroma_db", collection_name: str = "projectlens_docs"):
+    def __init__(self, persist_directory: str = "chroma_db", collection_name: str = "projectlens_v3_clean"):
+        if not CHROMA_AVAILABLE:
+            raise RuntimeError("Chroma DB is not available in this environment due to missing or blocked libraries.")
+            
         self.persist_directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), persist_directory)
         
         # Load API key for embedding generation if it exists in environment
@@ -313,13 +318,21 @@ class ChromaVectorStore:
     def build_index(self, documents: List[Document]):
         """Clears collection and registers split documents into Chroma."""
         try:
-            count = self.collection.count()
-            if count > 0:
-                all_docs = self.collection.get(include=[])
-                if all_docs and all_docs.get("ids"):
-                    self.collection.delete(ids=all_docs["ids"])
-        except Exception as e:
-            print(f"[Warning] Failed to clear Chroma collection: {e}")
+            existing = self.collection.get()
+            if existing and "ids" in existing and existing["ids"]:
+                self.collection.delete(ids=existing["ids"])
+        except Exception:
+            try:
+                self.collection = self.client.get_or_create_collection(
+                    name="projectlens_docs",
+                    embedding_function=self.embedding_function,
+                    metadata={"hnsw:space": "cosine"}
+                )
+                existing = self.collection.get()
+                if existing and "ids" in existing and existing["ids"]:
+                    self.collection.delete(ids=existing["ids"])
+            except Exception:
+                pass
 
         if not documents:
             return
@@ -382,11 +395,12 @@ class ChromaVectorStore:
                 doc_text = docs_list[i]
                 meta = metas_list[i] if i < len(metas_list) else {}
                 distance = distances_list[i] if i < len(distances_list) else 0.0
-                similarity = max(0.0, 1.0 - distance)
+                similarity = 1.0 / (1.0 + distance)
                 
                 doc_obj = Document(page_content=doc_text, metadata=meta)
                 math_formula = f"Chroma Cosine Distance: {distance:.3f} | Estimated Similarity: {similarity:.3f}"
                 retrieved.append((similarity, doc_obj, math_formula))
                 
         return retrieved
+
 

@@ -3,31 +3,32 @@
    ===================================================================== */
 
 :root {
-    --bg-darkest: #090b11;
-    --bg-darker: #0f111a;
-    --bg-slate: #161a2b;
-    --glass-bg: rgba(22, 26, 43, 0.65);
-    --glass-border: rgba(99, 102, 241, 0.18);
-    --glass-highlight: rgba(255, 255, 255, 0.03);
+    --bg-darkest: #0b0f19;
+    --bg-darker: #111827;
+    --bg-slate: #1f293d;
+    --glass-bg: rgba(17, 24, 39, 0.75);
+    --glass-border: rgba(99, 102, 241, 0.25);
+    --glass-highlight: rgba(255, 255, 255, 0.05);
     
     --color-primary: #6366f1; /* Electric Indigo */
     --color-primary-hover: #4f46e5;
+    --color-accent: #06b6d4; /* Vibrant Cyan */
     --color-success: #10b981; /* Neon Emerald */
     --color-warning: #f59e0b; /* Amber */
     --color-danger: #ef4444; /* Crimson */
     
-    --text-main: #f1f5f9;
+    --text-main: #f8fafc;
     --text-muted: #94a3b8;
     --text-dark: #64748b;
     
     --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --radius-sm: 6px;
-    --radius-md: 12px;
-    --radius-lg: 18px;
-    --shadow-indigo: 0 0 20px rgba(99, 102, 241, 0.15);
-    --shadow-heavy: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --shadow-indigo: 0 8px 32px rgba(99, 102, 241, 0.25);
+    --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.6);
     
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ==========================================
@@ -159,8 +160,9 @@ body {
 
 .form-group input:focus, .form-group select:focus {
     outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    border-color: #818cf8;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+    background: rgba(15, 17, 26, 0.95);
 }
 
 .error-msg {
@@ -171,6 +173,33 @@ body {
     padding: 10px;
     border-radius: var(--radius-sm);
     border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.success-msg {
+    color: var(--color-success);
+    font-size: 13px;
+    margin-bottom: 15px;
+    background: rgba(16, 185, 129, 0.1);
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.form-link {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.form-link a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: 14px;
+    transition: var(--transition-smooth);
+}
+
+.form-link a:hover {
+    color: var(--color-primary-hover);
+    text-decoration: underline;
 }
 
 .login-footer {
@@ -200,14 +229,19 @@ body {
 }
 
 .btn-primary {
-    background: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary) 0%, #4f46e5 100%);
     color: #fff;
-    box-shadow: var(--shadow-indigo);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-primary:hover {
-    background: var(--color-primary-hover);
-    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    transform: translateY(1px);
 }
 
 .btn-secondary {
@@ -458,36 +492,41 @@ body {
 /* Chat Message Blocks */
 .message {
     display: flex;
-    gap: 15px;
-    padding: 16px;
+    gap: 16px;
+    padding: 18px 20px;
     border-radius: var(--radius-md);
-    animation: fadeInUp 0.3s ease-out;
-    max-width: 85%;
+    animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    max-width: 88%;
+    transition: var(--transition-smooth);
 }
 
 .system-msg {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(135deg, rgba(31, 41, 61, 0.6) 0%, rgba(17, 24, 39, 0.8) 100%);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     align-self: flex-start;
 }
 
 .user-msg {
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(79, 70, 229, 0.3) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
     align-self: flex-end;
     flex-direction: row-reverse;
 }
 
 .msg-avatar {
-    width: 32px;
-    height: 32px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 16px;
+    font-size: 18px;
     flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .user-msg .msg-avatar {
@@ -558,67 +597,74 @@ body {
 
 /* Suggested Follow-up buttons */
 .follow-ups-bar {
-    padding: 10px 15px;
-    background: rgba(99, 102, 241, 0.05);
-    border: 1px solid rgba(99, 102, 241, 0.1);
-    border-radius: var(--radius-sm);
-    margin-bottom: 15px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(6, 182, 212, 0.05) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: var(--radius-md);
+    margin-bottom: 18px;
     animation: fadeIn 0.4s ease-out;
 }
 
 .follow-up-label {
     font-size: 11px;
-    font-weight: 600;
-    color: var(--text-dark);
+    font-weight: 700;
+    color: var(--color-accent);
     text-transform: uppercase;
+    letter-spacing: 0.5px;
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .follow-up-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
 }
 
 .follow-up-btn {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--glass-border);
-    color: var(--text-muted);
-    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: var(--text-main);
+    padding: 8px 14px;
     border-radius: 20px;
     font-family: var(--font-sans);
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
     transition: var(--transition-smooth);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .follow-up-btn:hover {
-    background: rgba(99, 102, 241, 0.15);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     color: #fff;
-    border-color: var(--color-primary);
+    border-color: transparent;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    transform: translateY(-2px);
 }
 
-/* Input typing box */
 .chat-input-area form {
     display: flex;
-    gap: 10px;
+    gap: 12px;
 }
 
 .chat-input-area input {
     flex-grow: 1;
-    padding: 14px 20px;
-    background: rgba(15, 17, 26, 0.8);
+    padding: 16px 22px;
+    background: rgba(17, 24, 39, 0.85);
     border: 1px solid var(--glass-border);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     color: #fff;
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: 15px;
+    transition: var(--transition-smooth);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .chat-input-area input:focus {
     outline: none;
     border-color: var(--color-primary);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* AGENT TELEMETRY TRACER PANEL */
@@ -785,6 +831,7 @@ body {
 
 .table-scroll {
     overflow-x: auto;
+    overflow-y: auto;
     max-height: 550px;
 }
 
@@ -846,5 +893,44 @@ body {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Pulsing status indicator dot */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-success);
+}
+.status-indicator::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-success);
+    box-shadow: 0 0 8px var(--color-success);
+    animation: pulseGlow 2s infinite;
+}
+@keyframes pulseGlow {
+    0% {
+        transform: scale(0.9);
+        box-shadow: 0 0 4px var(--color-success);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 12px var(--color-success);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0.9);
+        box-shadow: 0 0 4px var(--color-success);
+        opacity: 0.8;
     }
 }

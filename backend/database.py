@@ -53,6 +53,17 @@ def init_db():
     )
     """)
     
+    # 4. Create Password Resets Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS password_resets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        token TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        used INTEGER DEFAULT 0
+    )
+    """)
+    
     conn.commit()
     
     # Seed default users if empty
@@ -70,37 +81,70 @@ def init_db():
         # Log database seeding
         log_audit("system", "System", "DB_INIT", "Database initialized and default accounts seeded.")
         
-    # Seed default documents if empty
-    cursor.execute("SELECT COUNT(*) FROM documents")
-    if cursor.fetchone()[0] == 0:
-        import json
-        docs = [
-            ("Project_Atlas_BRD.txt", 
-             "Project Atlas is the company's next-generation payments gateway. It aims to solve the merchant processing latency problem by implementing a local cache mechanism. The Business Analyst is Sarah Jenkins, the Product Owner is David Miller, and the Lead Developer is James Carter. The project was initiated in Q1 2026 to address a 15% transaction drop rate.",
-             json.dumps({"project": "Project Atlas", "doc_type": "BRD", "filename": "Project_Atlas_BRD.txt", "uploaded_by": "system"})),
-            
-            ("Project_Atlas_FRD.txt",
-             "Project Atlas payment gateway supports REST APIs for transaction authorizations, refunds, and settlements. The endpoints are /api/v1/auth, /api/v1/refund, and /api/v1/settle. Authorization latency must be under 200ms. Refunds must be processed within 24 hours of receipt. Error code 4001 indicates terminal card expiration.",
-             json.dumps({"project": "Project Atlas", "doc_type": "FRD", "filename": "Project_Atlas_FRD.txt", "uploaded_by": "system"})),
-            
-            ("Company_Onboarding_SOP.txt",
-             "Welcome to the corporate portal. For general onboarding, new hires must complete their workspace security setup on Day 1. On Day 2, contact your supervisor for project allocations. On Day 3, review the project documentation in ProjectLens AI. All access logs are subject to security audits.",
-             json.dumps({"project": "General Process", "doc_type": "SOP", "filename": "Company_Onboarding_SOP.txt", "uploaded_by": "system"})),
-            
-            ("Team_Directory.txt",
-             "Sarah Jenkins is the Senior Business Analyst for Project Atlas. David Miller is the Principal Product Owner. James Carter is the Lead Developer. Jessica Taylor is the QA Lead. All team members report to the Director of Payments Engineering.",
-             json.dumps({"project": "Project Atlas", "doc_type": "Org Chart", "filename": "Team_Directory.txt", "uploaded_by": "system"}))
-        ]
+    # Default document seeding removed to allow clean custom uploads.
         
+    # Scan sample_docs directory and auto-ingest new files
+    sample_docs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "sample_docs")
+    if os.path.exists(sample_docs_dir):
         created_at = datetime.now().isoformat()
-        for title, content, metadata_json in docs:
-            cursor.execute(
-                "INSERT INTO documents (title, content, metadata_json, created_at) VALUES (?, ?, ?, ?)",
-                (title, content, metadata_json, created_at)
-            )
-        conn.commit()
-        log_audit("system", "System", "DB_INIT_DOCS", "Sample project documents seeded.")
-        
+        for file_name in os.listdir(sample_docs_dir):
+            if file_name.endswith((".txt", ".md", ".json", ".pdf")):
+                cursor.execute("SELECT COUNT(*) FROM documents WHERE title = ?", (file_name,))
+                if cursor.fetchone()[0] == 0:
+                    file_path = os.path.join(sample_docs_dir, file_name)
+                    try:
+                        if file_name.endswith(".pdf"):
+                            from pypdf import PdfReader
+                            reader = PdfReader(file_path)
+                            text_runs = []
+                            for page in reader.pages:
+                                txt = page.extract_text()
+                                if txt:
+                                    text_runs.append(txt)
+                            content = "\n\n".join(text_runs)
+                        else:
+                            with open(file_path, "r", encoding="utf-8") as f:
+                                content = f.read()
+                        
+                        # Parse project and doc_type
+                        project_name = "General Process"
+                        doc_type = "SOP"
+                        
+                        if file_name.startswith("Project_"):
+                            parts = file_name.split("_")
+                            if len(parts) >= 2:
+                                project_name = f"Project {parts[1]}"
+                        
+                        file_name_lower = file_name.lower()
+                        if "brd" in file_name_lower or "product_requirements" in file_name_lower:
+                            doc_type = "BRD"
+                        elif "frd" in file_name_lower:
+                            doc_type = "FRD"
+                        elif "mom" in file_name_lower or "meeting" in file_name_lower:
+                            doc_type = "Meeting Notes"
+                        elif "team" in file_name_lower or "directory" in file_name_lower:
+                            doc_type = "Org Chart"
+                        elif "architecture" in file_name_lower or "specifications" in file_name_lower:
+                            doc_type = "Architecture"
+                        elif "sop" in file_name_lower or "failover" in file_name_lower:
+                            doc_type = "SOP"
+                            
+                        metadata = {
+                            "project": project_name,
+                            "doc_type": doc_type,
+                            "filename": file_name,
+                            "uploaded_by": "system"
+                        }
+                        
+                        cursor.execute(
+                            "INSERT INTO documents (title, content, metadata_json, created_at) VALUES (?, ?, ?, ?)",
+                            (file_name, content, json.dumps(metadata), created_at)
+                        )
+                        conn.commit()
+                        log_audit("system", "System", "DB_AUTO_INGEST", f"Automatically ingested and indexed sample document: {file_name}")
+                    except Exception as e:
+                        print(f"Failed to auto-ingest {file_name}: {e}")
+                        
     conn.close()
 
 def log_audit(username: str, role: str, action: str, details: str):

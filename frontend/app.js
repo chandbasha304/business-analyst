@@ -2,7 +2,7 @@
 // PROJECTLENS AI: FRONTEND CONTROLLER & RAG DATA CONNECTOR
 // =====================================================================
 
-const API_BASE = "/api";
+const API_BASE = (window.location.origin.includes("3000") || window.location.protocol === "file:") ? "http://127.0.0.1:8085/api" : "/api";
 let jwtToken = localStorage.getItem("projectlens_token") || "";
 let userName = localStorage.getItem("projectlens_username") || "";
 let userRole = localStorage.getItem("projectlens_role") || "";
@@ -32,7 +32,6 @@ function showLogin() {
 
 function showDashboard() {
     document.getElementById("login-container").classList.add("hide");
-    document.getElementById("app-container").classList.remove("remove"); // safety
     document.getElementById("app-container").classList.remove("hide");
     
     // Update User Profile labels
@@ -119,6 +118,22 @@ function setupEventListeners() {
 
     // 8. Re-index database button
     document.getElementById("reindex-btn").addEventListener("click", handleReindex);
+
+    // 9. Forgot & Reset Password bindings
+    document.getElementById("forgot-password-link").addEventListener("click", (e) => {
+        e.preventDefault();
+        showForgotForm();
+    });
+    document.getElementById("forgot-back-to-login").addEventListener("click", (e) => {
+        e.preventDefault();
+        showLoginForm();
+    });
+    document.getElementById("reset-back-to-login").addEventListener("click", (e) => {
+        e.preventDefault();
+        showLoginForm();
+    });
+    document.getElementById("forgot-form").addEventListener("submit", handleForgotSubmit);
+    document.getElementById("reset-form").addEventListener("submit", handleResetSubmit);
 }
 
 // ==========================================
@@ -178,12 +193,12 @@ function handleLogout() {
         <div class="message system-msg">
             <div class="msg-avatar">🤖</div>
             <div class="msg-content">
-                <p>Welcome to <strong>ProjectLens AI</strong>. I can query requirement documents, meeting notes, or organization records.</p>
+                <p>Welcome to <strong>ProjectLens AI</strong>. I can answer questions across your 15 indexed corporate project specifications, architecture files, and SOPs.</p>
                 <p class="sample-title">Try asking these sample questions:</p>
                 <ul class="sample-queries">
-                    <li>"Explain Project Atlas."</li>
-                    <li>"Who is the Business Analyst for Project Atlas?"</li>
-                    <li>"What APIs are implemented?"</li>
+                    <li>"Who is the lead for Helios Solar Grid?"</li>
+                    <li>"What are the RTO and RPO benchmarks for Sentinel Disaster Recovery?"</li>
+                    <li>"What compliance frameworks does BioHealth Clinical Engine follow?"</li>
                 </ul>
             </div>
         </div>
@@ -360,14 +375,14 @@ function renderReasoningTrace(trace) {
         const stepEl = document.createElement("div");
         stepEl.className = "trace-step";
         
-        if (step.includes("Step 1") || step.includes("Step 5")) {
+        if (step.includes("[LangGraph Node:")) {
             stepEl.classList.add("accent");
-        } else if (step.includes("rebuilt") || step.includes("Success") || step.includes("Gemini Step")) {
+            const formatted = step.replace("[LangGraph Node:", "<span class='badge' style='background:rgba(99,102,241,0.25); color:#818cf8; font-size:10px; padding:2px 6px; border-radius:4px; margin-right:4px;'>NODE</span>");
+            stepEl.innerHTML = formatted;
+        } else if (step.includes("Intent Classified") || step.includes("Retrieved") || step.includes("Gemini Step")) {
             stepEl.classList.add("success");
-        }
-        
-        // Extract cosine math details to a subline for nicer logging
-        if (step.includes("Cosine similarity")) {
+            stepEl.innerText = step;
+        } else if (step.includes("Cosine similarity")) {
             const parts = step.split("|");
             stepEl.innerHTML = `<div>${escapeHTML(parts[0])}</div><div class="trace-math">${escapeHTML(parts[1] || "")}</div>`;
         } else {
@@ -413,6 +428,11 @@ async function loadAdminDocuments() {
         const response = await fetch(`${API_BASE}/admin/documents`, {
             headers: { "Authorization": `Bearer ${jwtToken}` }
         });
+        
+        if (response.status === 401) {
+            handleLogout();
+            return;
+        }
         
         if (!response.ok) throw new Error("Failed to fetch documents.");
         
@@ -469,6 +489,12 @@ async function handleDocumentUpload(e) {
             body: formData
         });
         
+        if (response.status === 401) {
+            handleLogout();
+            alert("Your session has expired. Please log in again.");
+            return;
+        }
+        
         if (!response.ok) {
             const err = await response.json();
             throw new Error(err.detail || "Failed to upload file.");
@@ -497,6 +523,12 @@ async function deleteDocument(docId) {
             headers: { "Authorization": `Bearer ${jwtToken}` }
         });
         
+        if (response.status === 401) {
+            handleLogout();
+            alert("Your session has expired. Please log in again.");
+            return;
+        }
+        
         if (!response.ok) throw new Error("Deletion failed.");
         
         alert("Document deleted. Remember to click Re-index Knowledge Base.");
@@ -518,6 +550,12 @@ async function handleReindex() {
             headers: { "Authorization": `Bearer ${jwtToken}` }
         });
         
+        if (response.status === 401) {
+            handleLogout();
+            alert("Your session has expired. Please log in again.");
+            return;
+        }
+        
         if (!response.ok) throw new Error("Reindexing failed.");
         
         alert("Knowledge base vector store re-indexed successfully. Ready for semantic queries.");
@@ -537,6 +575,11 @@ async function loadSecurityAudits() {
         const response = await fetch(`${API_BASE}/admin/audits`, {
             headers: { "Authorization": `Bearer ${jwtToken}` }
         });
+        
+        if (response.status === 401) {
+            handleLogout();
+            return;
+        }
         
         if (!response.ok) throw new Error("Failed to fetch audits.");
         
@@ -593,4 +636,136 @@ function escapeHTML(str) {
 function formatMarkdownBold(text) {
     // Simple regex to parse **bold** words to html tags
     return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+}
+
+// ==========================================
+// FORGOT / RESET PASSWORD CONTROLLER
+// ==========================================
+function showForgotForm() {
+    document.getElementById("login-form").classList.add("hide");
+    document.getElementById("forgot-form").classList.remove("hide");
+    document.getElementById("reset-form").classList.add("hide");
+    
+    document.getElementById("forgot-error").classList.add("hide");
+    document.getElementById("forgot-success").classList.add("hide");
+    document.getElementById("forgot-username").value = "";
+}
+
+function showLoginForm() {
+    document.getElementById("login-form").classList.remove("hide");
+    document.getElementById("forgot-form").classList.add("hide");
+    document.getElementById("reset-form").classList.add("hide");
+    
+    document.getElementById("login-error").classList.add("hide");
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+}
+
+function showResetForm(username, token) {
+    document.getElementById("login-form").classList.add("hide");
+    document.getElementById("forgot-form").classList.add("hide");
+    document.getElementById("reset-form").classList.remove("hide");
+    
+    document.getElementById("reset-username").value = username;
+    document.getElementById("reset-token").value = token || "";
+    document.getElementById("new-password").value = "";
+    
+    document.getElementById("reset-error").classList.add("hide");
+    document.getElementById("reset-success").classList.add("hide");
+}
+
+async function handleForgotSubmit(e) {
+    e.preventDefault();
+    const errorEl = document.getElementById("forgot-error");
+    const successEl = document.getElementById("forgot-success");
+    errorEl.classList.add("hide");
+    successEl.classList.add("hide");
+    
+    const username = document.getElementById("forgot-username").value.trim();
+    if (!username) return;
+    
+    const submitBtn = document.getElementById("forgot-submit-btn");
+    submitBtn.innerText = "Requesting...";
+    submitBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || "Failed to generate reset token.");
+        }
+        
+        const data = await response.json();
+        
+        successEl.innerText = "Reset token generated successfully! Opening reset window...";
+        successEl.classList.remove("hide");
+        
+        // Auto-redirect to reset password form, pre-filling token
+        setTimeout(() => {
+            showResetForm(username, data.token);
+            successEl.classList.add("hide");
+        }, 1500);
+        
+    } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.classList.remove("hide");
+    } finally {
+        submitBtn.innerText = "Request Reset Token";
+        submitBtn.disabled = false;
+    }
+}
+
+async function handleResetSubmit(e) {
+    e.preventDefault();
+    const errorEl = document.getElementById("reset-error");
+    const successEl = document.getElementById("reset-success");
+    errorEl.classList.add("hide");
+    successEl.classList.add("hide");
+    
+    const username = document.getElementById("reset-username").value.trim();
+    const token = document.getElementById("reset-token").value.trim();
+    const newPassword = document.getElementById("new-password").value;
+    
+    if (newPassword.length < 8) {
+        errorEl.innerText = "Password must be at least 8 characters long.";
+        errorEl.classList.remove("hide");
+        return;
+    }
+    
+    const submitBtn = document.getElementById("reset-submit-btn");
+    submitBtn.innerText = "Updating...";
+    submitBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`${API_BASE}/auth/reset-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, token, new_password: newPassword })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || "Failed to reset password.");
+        }
+        
+        successEl.innerText = "Password updated successfully! Returning to login...";
+        successEl.classList.remove("hide");
+        
+        setTimeout(() => {
+            showLoginForm();
+            successEl.classList.add("hide");
+        }, 2000);
+        
+    } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.classList.remove("hide");
+    } finally {
+        submitBtn.innerText = "Update Password";
+        submitBtn.disabled = false;
+    }
 }

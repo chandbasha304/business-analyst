@@ -34,6 +34,53 @@
                 <button type="submit" class="btn btn-primary btn-block">
                     Authenticate Session
                 </button>
+                <div class="form-link">
+                    <a href="#" id="forgot-password-link">Forgot Password?</a>
+                </div>
+            </form>
+
+            <!-- FORGOT PASSWORD REQUEST FORM -->
+            <form id="forgot-form" class="hide">
+                <div class="form-group">
+                    <label for="forgot-username">Enterprise ID</label>
+                    <input type="text" id="forgot-username" placeholder="e.g., employee or admin" required>
+                </div>
+                
+                <div id="forgot-error" class="error-msg hide"></div>
+                <div id="forgot-success" class="success-msg hide"></div>
+                
+                <button type="submit" class="btn btn-primary btn-block" id="forgot-submit-btn">
+                    Request Reset Token
+                </button>
+                <div class="form-link">
+                    <a href="#" id="forgot-back-to-login">Back to Login</a>
+                </div>
+            </form>
+
+            <!-- PASSWORD RESET SUBMISSION FORM -->
+            <form id="reset-form" class="hide">
+                <div class="form-group">
+                    <label for="reset-username">Enterprise ID</label>
+                    <input type="text" id="reset-username" placeholder="e.g., employee or admin" required readonly>
+                </div>
+                <div class="form-group">
+                    <label for="reset-token">Reset Token</label>
+                    <input type="text" id="reset-token" placeholder="Paste generated token" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">New Security Password</label>
+                    <input type="password" id="new-password" placeholder="Min. 8 characters" required>
+                </div>
+                
+                <div id="reset-error" class="error-msg hide"></div>
+                <div id="reset-success" class="success-msg hide"></div>
+                
+                <button type="submit" class="btn btn-primary btn-block" id="reset-submit-btn">
+                    Update Password
+                </button>
+                <div class="form-link">
+                    <a href="#" id="reset-back-to-login">Back to Login</a>
+                </div>
             </form>
             <div class="login-footer">
                 <small>🔒 Local intranet only. Inputs are isolated from model training.</small>
@@ -101,12 +148,12 @@
                                 <div class="message system-msg">
                                     <div class="msg-avatar">🤖</div>
                                     <div class="msg-content">
-                                        <p>Welcome to <strong>ProjectLens AI</strong>. I can query requirement documents, meeting notes, or organization records.</p>
+                                        <p>Welcome to <strong>ProjectLens AI</strong>. I can answer questions across your 15 indexed corporate project specifications, architecture files, and SOPs.</p>
                                         <p class="sample-title">Try asking these sample questions:</p>
                                         <ul class="sample-queries">
-                                            <li>"Explain Project Atlas."</li>
-                                            <li>"Who is the Business Analyst for Project Atlas?"</li>
-                                            <li>"What APIs are implemented?"</li>
+                                            <li>"Who is the lead for Helios Solar Grid?"</li>
+                                            <li>"What are the RTO and RPO benchmarks for Sentinel Disaster Recovery?"</li>
+                                            <li>"What compliance frameworks does BioHealth Clinical Engine follow?"</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -158,8 +205,8 @@
                         <h4>Register New Document</h4>
                         <form id="upload-form">
                             <div class="form-group">
-                                <label for="upload-file">Select Local File (.txt, .md, .json)</label>
-                                <input type="file" id="upload-file" accept=".txt,.md,.json" required>
+                                <label for="upload-file">Select Local File (.txt, .md, .json, .pdf)</label>
+                                <input type="file" id="upload-file" accept=".txt,.md,.json,.pdf" required>
                             </div>
                             
                             <div class="form-group">
